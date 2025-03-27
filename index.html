@@ -43,14 +43,18 @@
     p.desc { font-size: 14px; color: #555; }
     .emotion-tags { margin: 15px 0; }
     .emotion-tags button {
-      margin: 5px;
-      padding: 6px 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      background: #eef3ff;
-      cursor: pointer;
-    }
+  margin: 5px;
+  padding: 6px 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  color: #333;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+}
     .feedback { margin-top: 10px; font-size: 14px; color: #888; }
     textarea, input {
       width: 100%;
@@ -111,8 +115,8 @@
     <a href="https://apple-jeffery.github.io">← 返回 Jeffery 主站</a>
   </div>
   <div class="container">
-    <h1>🌙 Jeffery 的情绪树洞</h1>
-    <p class="desc">写下此刻心情，不用解释，放心交给树洞吧 🌳</p>
+    <h1>🌙 大家的情绪树洞 by Jeffery</h1>
+    <p class="desc">写下此刻心情，不用解释，放心交给这个专属大家的树洞吧 🌳</p>
     <input id="nickname" placeholder="你的小名、外号或任何标识（建议加上时间点，更有纪念感！）">
     <div class="emotion-tags" id="emotionTags">
       <button onclick="toggleEmotion('😊')">😊 开心</button>
@@ -135,7 +139,21 @@
     <button onclick="toggleMode()">🌃 深浅切换</button>
     <button onclick="randomFeeling()">❤️ 随机一条</button>
     <canvas id="chart" height="200"></canvas>
-    <div id="log"></div>
+    
+<footer id="footer-msg" style="margin-top: 40px; font-size: 13px; color: #999; text-align: center;">
+  这个小树洞是 Jeffery 悄悄搭建的，欢迎你随时来丢下一颗心情糖果 🍬
+</footer>
+<script>
+  const messages = [
+    "这个小树洞是 Jeffery 悄悄搭建的，欢迎你随时来丢下一颗心情糖果 🍬",
+    "这个小树洞是 Jeffery 偷偷种下的，等你来悄悄埋下点什么 🌱",
+    "这个小树洞是 Jeffery 默默开的小口子，专收你的碎碎念 ✨",
+    "这个小树洞是 Jeffery 悄悄建的，适合丢下一句没人懂的话 🌙",
+    "这个小树洞是 Jeffery 留下的小角落，有空来坐坐也挺好 ☕"
+  ];
+  const footer = document.getElementById("footer-msg");
+  footer.textContent = messages[Math.floor(Math.random() * messages.length)];
+</script>
   </div>
 
   <script>
