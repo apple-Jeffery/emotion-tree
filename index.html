@@ -29,7 +29,7 @@
     const chartData = labels.map(l => ({
       label: `${l} ${(data[l] / total * 100).toFixed(1)}%`,
       value: data[l],
-      backgroundColor: emotionColors[l] || "#ccc"
+      backgroundColor: emotionColors[emojiMapKeyFromEmoji(l)] || "#ccc"
     }));
     new Chart(ctx, {
       type: "bar",
@@ -48,6 +48,12 @@
         }
       }
     });
+  }
+  function emojiMapKeyFromEmoji(emoji) {
+    for (const [key, value] of Object.entries(emojiMap)) {
+      if (value === emoji) return key;
+    }
+    return null;
   }
 </script>
   <style>
@@ -231,15 +237,15 @@
   <script>
     let colors = {};
     const emotionColors = {
-      "😊": "#f6c026",
-      "😢": "#5dade2",
-      "😡": "#e74c3c",
-      "😰": "#7f8c8d",
-      "🥱": "#a29bfe",
-      "😴": "#95a5a6",
-      "🤩": "#f39c12",
-      "🤯": "#8e44ad"
-    };
+  "😊": "#f6c026",
+  "😢": "#5dade2",
+  "😡": "#e74c3c",
+  "😰": "#7f8c8d",
+  "🥱": "#a29bfe",
+  "😴": "#95a5a6",
+  "🤩": "#f39c12",
+  "🤯": "#8e44ad"
+};
 
     function toggleEmotion(e) {
       const index = selectedEmotions.indexOf(e);
@@ -248,7 +254,7 @@
       } else {
         selectedEmotions.splice(index, 1);
       }
-      document.getElementById("emotionFeedback").textContent = "已选情绪：" + (selectedEmotions.length ? selectedEmotions.join(' ') : "无");
+      document.getElementById("emotionFeedback").textContent = "已选情绪：" + (selectedEmotions.length ? selectedEmotions.map(e => emojiMap[e]).join(' ') : "无");
     }
 
     function saveFeeling() {
@@ -260,7 +266,7 @@
       const color = colors[nick] || getRandomColor();
       const entry = document.createElement("div");
       entry.className = "entry";
-      entry.innerHTML = `<time>${time}</time><strong style="color:${color}">${nick || "匿名"}</strong>：<span>${selectedEmotions.map(e => emojiMap[e] || e).join(' ')} ${text}</span>`;
+      entry.innerHTML = `<time>${time}</time><strong style="color:${color}">${nick || "匿名"}</strong>：<span>${selectedEmotions.map(e => emojiMap[e]).join(' ')} ${text}</span>`;
       document.getElementById("log").prepend(entry);
       document.getElementById("feeling").value = "";
       selectedEmotions = [];
