@@ -51,6 +51,7 @@
       background: #eef3ff;
       cursor: pointer;
     }
+    .feedback { margin-top: 10px; font-size: 14px; color: #888; }
     textarea, input {
       width: 100%;
       padding: 12px;
@@ -112,35 +113,58 @@
   <div class="container">
     <h1>🌙 Jeffery 的情绪树洞</h1>
     <p class="desc">写下此刻心情，不用解释，放心交给树洞吧 🌳</p>
-    <input id="nickname" placeholder="您的昵称（可选）">
-    <div class="emotion-tags">
-      <button onclick="setEmotion('😊')">😊 开心</button>
-      <button onclick="setEmotion('😢')">😢 伤心</button>
-      <button onclick="setEmotion('😡')">😡 生气</button>
-      <button onclick="setEmotion('😰')">😰 焦虑</button>
-      <button onclick="setEmotion('🥱')">🥱 无聊</button>
-      <button onclick="setEmotion('😴')">😴 疲惫</button>
-      <button onclick="setEmotion('🤩')">🤩 兴奋</button>
-      <button onclick="setEmotion('🤯')">🤯 迷茫</button>
+    <input id="nickname" placeholder="你的小名、外号或任何标识（建议加上时间点，更有纪念感！）">
+    <div class="emotion-tags" id="emotionTags">
+      <button onclick="toggleEmotion('😊')">😊 开心</button>
+      <button onclick="toggleEmotion('😢')">😢 伤心</button>
+      <button onclick="toggleEmotion('😡')">😡 生气</button>
+      <button onclick="toggleEmotion('😰')">😰 焦虑</button>
+      <button onclick="toggleEmotion('🥱')">🥱 无聊</button>
+      <button onclick="toggleEmotion('😴')">😴 疲惫</button>
+      <button onclick="toggleEmotion('🤩')">🤩 兴奋</button>
+      <button onclick="toggleEmotion('🤯')">🤯 迷茫</button>
     </div>
+    <div class="feedback" id="emotionFeedback">已选情绪：无</div>
     <textarea id="feeling" placeholder="今天你想说什么？"></textarea>
     <div class="search-box">
       🔍 搜索留言：<input type="text" id="search" oninput="highlightSearch()">
     </div>
-    <button onclick="saveFeeling()">📝 记录</button>
+    <button onclick="saveFeeling()">💾 保存</button>
     <button onclick="exportFeelings()">☁️ 导出</button>
     <button onclick="clearFeelings()">🗑️ 清除</button>
-    <button onclick="toggleMode()">🌓 深浅切换</button>
+    <button onclick="toggleMode()">🌃 深浅切换</button>
     <button onclick="randomFeeling()">❤️ 随机一条</button>
     <canvas id="chart" height="200"></canvas>
     <div id="log"></div>
   </div>
 
   <script>
-    let selectedEmotion = "";
+    (() => {
+      window.selectedEmotions = [];
+    })();
+  </script>
+  <script>
     let colors = {};
+    const emotionColors = {
+      "😊": "#f6c026",
+      "😢": "#5dade2",
+      "😡": "#e74c3c",
+      "😰": "#7f8c8d",
+      "🥱": "#a29bfe",
+      "😴": "#95a5a6",
+      "🤩": "#f39c12",
+      "🤯": "#8e44ad"
+    };
 
-    function setEmotion(e) { selectedEmotion = e; }
+    function toggleEmotion(e) {
+      const index = selectedEmotions.indexOf(e);
+      if (index === -1) {
+        selectedEmotions.push(e);
+      } else {
+        selectedEmotions.splice(index, 1);
+      }
+      document.getElementById("emotionFeedback").textContent = "已选情绪：" + (selectedEmotions.length ? selectedEmotions.join(' ') : "无");
+    }
 
     function saveFeeling() {
       const text = document.getElementById("feeling").value.trim();
@@ -151,12 +175,53 @@
       const color = colors[nick] || getRandomColor();
       const entry = document.createElement("div");
       entry.className = "entry";
-      entry.innerHTML = `<time>${time}</time><strong style="color:${color}">${nick || "匿名"}</strong>：<span>${selectedEmotion} ${text}</span>`;
+      entry.innerHTML = `<time>${time}</time><strong style="color:${color}">${nick || "匿名"}</strong>：<span>${selectedEmotions.join(' ')} ${text}</span>`;
       document.getElementById("log").prepend(entry);
       document.getElementById("feeling").value = "";
+      selectedEmotions = [];
+      document.getElementById("emotionFeedback").textContent = "已选情绪：无";
       if (nick && !colors[nick]) colors[nick] = color;
       saveToStorage();
       updateChart();
+    }
+
+    function updateChart() {
+      const ctx = document.getElementById("chart").getContext("2d");
+      const data = {};
+      document.querySelectorAll(".entry span").forEach(e => {
+        [...e.innerText.matchAll(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g)].forEach(m => {
+          const emo = m[0];
+          data[emo] = (data[emo] || 0) + 1;
+        });
+      });
+      const total = Object.values(data).reduce((a,b) => a + b, 0);
+      const labels = Object.keys(data);
+      const chartData = labels.map(l => ({
+        label: `${l} ${(data[l] / total * 100).toFixed(1)}%`,
+        value: data[l],
+        backgroundColor: emotionColors[l] || "#ccc"
+      }));
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: chartData.map(d => d.label),
+          datasets: [{
+            data: chartData.map(d => d.value),
+            backgroundColor: chartData.map(d => d.backgroundColor)
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    }
+
+    function getRandomColor() {
+      return '#' + Math.floor(Math.random()*16777215).toString(16);
     }
 
     function exportFeelings() {
@@ -189,11 +254,7 @@
       const entries = document.querySelectorAll(".entry span");
       entries.forEach(span => {
         const raw = span.innerText;
-        if (keyword) {
-          span.innerHTML = raw.replace(new RegExp(`(${keyword})`, 'gi'), '<span class="highlight">$1</span>');
-        } else {
-          span.innerHTML = raw;
-        }
+        span.innerHTML = keyword ? raw.replace(new RegExp(`(${keyword})`, 'gi'), '<span class="highlight">$1</span>') : raw;
       });
     }
 
@@ -210,31 +271,6 @@
     function loadFromStorage() {
       const stored = localStorage.getItem("jeffery-log");
       if (stored) document.getElementById("log").innerHTML = stored;
-    }
-
-    function updateChart() {
-      const ctx = document.getElementById("chart").getContext("2d");
-      const data = {};
-      document.querySelectorAll(".entry span").forEach(e => {
-        const emo = e.innerText.trim().slice(0, 2);
-        data[emo] = (data[emo] || 0) + 1;
-      });
-      const chart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: Object.keys(data),
-          datasets: [{
-            label: "情绪分布",
-            data: Object.values(data),
-            backgroundColor: "#4e79a7"
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } } }
-      });
-    }
-
-    function getRandomColor() {
-      return '#' + Math.floor(Math.random()*16777215).toString(16);
     }
 
     loadFromStorage();
