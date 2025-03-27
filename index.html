@@ -1,99 +1,244 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🌙 Jeffery 的情绪树洞</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --bg-color: rgba(255, 255, 255, 0.65);
+      --text-color: #333;
+      --entry-bg: rgba(255,255,255,0.8);
+    }
+    body.dark {
+      --bg-color: rgba(44,44,46,0.7);
+      --text-color: #eee;
+      --entry-bg: rgba(33,33,33,0.8);
+    }
     body {
       margin: 0;
-      font-family: "Segoe UI", Roboto, Arial, sans-serif;
-      background: linear-gradient(to bottom, #dbeafe, #e0f2fe);
-      color: #111;
-      background-image: url("background-soft.jpg"); /* 建议另存一张模糊柔和的背景图 */
+      padding: 0;
+      background: url('background-soft.jpg') no-repeat center center fixed;
       background-size: cover;
-      background-attachment: fixed;
-      text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: var(--text-color);
     }
     .container {
-      max-width: 800px;
-      margin: 60px auto;
+      background: var(--bg-color);
       padding: 30px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 18px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      max-width: 720px;
+      width: 90%;
+      text-align: center;
       backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
     }
-    h1 {
-      font-size: 2.2em;
-      margin-bottom: 20px;
-      color: #2563eb;
+    h1 { font-size: 28px; margin-bottom: 10px; color: #3366cc; }
+    p.desc { font-size: 14px; color: #555; }
+    .emotion-tags { margin: 15px 0; }
+    .emotion-tags button {
+      margin: 5px;
+      padding: 6px 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: #eef3ff;
+      cursor: pointer;
     }
-    textarea {
+    textarea, input {
       width: 100%;
-      height: 120px;
-      font-size: 1.1em;
-      padding: 15px;
-      border: 1px solid #ccc;
+      padding: 12px;
+      font-size: 16px;
       border-radius: 10px;
-      resize: none;
-      background: #f9fafb;
+      border: 1px solid #ccc;
+      margin: 10px 0;
+      box-sizing: border-box;
     }
     button {
-      margin-top: 20px;
-      padding: 12px 28px;
-      font-size: 1em;
-      background: #3b82f6;
-      color: white;
+      margin-top: 10px;
+      margin-right: 8px;
+      padding: 10px 20px;
+      font-size: 15px;
       border: none;
       border-radius: 8px;
+      background-color: #337aff;
+      color: white;
       cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #2563eb;
     }
     .entry {
-      background: #fef3c7;
-      margin-top: 30px;
-      padding: 15px 20px;
-      border-radius: 12px;
+      background: var(--entry-bg);
+      margin-top: 15px;
+      padding: 10px 20px;
+      border-left: 5px solid #ffcf66;
+      border-radius: 10px;
       text-align: left;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
-    .timestamp {
-      font-size: 0.9em;
-      color: #6b7280;
-      margin-bottom: 8px;
+    .entry time { font-size: 12px; color: #888; display: block; margin-bottom: 5px; }
+    .nav {
+      position: absolute;
+      top: 20px;
+      left: 20px;
     }
+    .nav a {
+      text-decoration: none;
+      background: #ffffffaa;
+      padding: 8px 14px;
+      border-radius: 6px;
+      color: #333;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .search-box input {
+      padding: 8px;
+      width: 80%;
+      max-width: 300px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .highlight { background: yellow; }
+    canvas { margin-top: 20px; max-width: 100%; }
   </style>
 </head>
 <body>
+  <div class="nav">
+    <a href="https://apple-jeffery.github.io">← 返回 Jeffery 主站</a>
+  </div>
   <div class="container">
     <h1>🌙 Jeffery 的情绪树洞</h1>
-    <p>写下此刻的心情，不用解释，不用犹豫。</p>
-    <textarea id="moodInput" placeholder="今天你想说什么？"></textarea><br />
-    <button onclick="saveMood()">📝 记录下来</button>
-    <div id="moodList"></div>
+    <p class="desc">写下此刻心情，不用解释，放心交给树洞吧 🌳</p>
+    <input id="nickname" placeholder="您的昵称（可选）">
+    <div class="emotion-tags">
+      <button onclick="setEmotion('😊')">😊 开心</button>
+      <button onclick="setEmotion('😢')">😢 伤心</button>
+      <button onclick="setEmotion('😡')">😡 生气</button>
+      <button onclick="setEmotion('😰')">😰 焦虑</button>
+      <button onclick="setEmotion('🥱')">🥱 无聊</button>
+      <button onclick="setEmotion('😴')">😴 疲惫</button>
+      <button onclick="setEmotion('🤩')">🤩 兴奋</button>
+      <button onclick="setEmotion('🤯')">🤯 迷茫</button>
+    </div>
+    <textarea id="feeling" placeholder="今天你想说什么？"></textarea>
+    <div class="search-box">
+      🔍 搜索留言：<input type="text" id="search" oninput="highlightSearch()">
+    </div>
+    <button onclick="saveFeeling()">📝 记录</button>
+    <button onclick="exportFeelings()">☁️ 导出</button>
+    <button onclick="clearFeelings()">🗑️ 清除</button>
+    <button onclick="toggleMode()">🌓 深浅切换</button>
+    <button onclick="randomFeeling()">❤️ 随机一条</button>
+    <canvas id="chart" height="200"></canvas>
+    <div id="log"></div>
   </div>
 
   <script>
-    function saveMood() {
-      const input = document.getElementById("moodInput");
-      const mood = input.value.trim();
-      if (mood === "") return;
+    let selectedEmotion = "";
+    let colors = {};
 
+    function setEmotion(e) { selectedEmotion = e; }
+
+    function saveFeeling() {
+      const text = document.getElementById("feeling").value.trim();
+      const nick = document.getElementById("nickname").value.trim();
+      if (!text) return;
       const now = new Date();
-      const timeString = now.toLocaleString();
-      const moodList = document.getElementById("moodList");
-
+      const time = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.toLocaleTimeString()}`;
+      const color = colors[nick] || getRandomColor();
       const entry = document.createElement("div");
       entry.className = "entry";
-      entry.innerHTML = `<div class='timestamp'>${timeString}</div><div>${mood}</div>`;
-      moodList.prepend(entry);
-
-      input.value = "";
+      entry.innerHTML = `<time>${time}</time><strong style="color:${color}">${nick || "匿名"}</strong>：<span>${selectedEmotion} ${text}</span>`;
+      document.getElementById("log").prepend(entry);
+      document.getElementById("feeling").value = "";
+      if (nick && !colors[nick]) colors[nick] = color;
+      saveToStorage();
+      updateChart();
     }
+
+    function exportFeelings() {
+      const entries = document.querySelectorAll('.entry');
+      let content = '';
+      entries.forEach(e => content += e.innerText + '\n\n');
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'jeffery_emotions.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearFeelings() {
+      if (confirm("确定要清除所有记录吗？")) {
+        document.getElementById("log").innerHTML = "";
+        localStorage.removeItem("jeffery-log");
+        updateChart();
+      }
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle("dark");
+    }
+
+    function highlightSearch() {
+      const keyword = document.getElementById("search").value.trim();
+      const entries = document.querySelectorAll(".entry span");
+      entries.forEach(span => {
+        const raw = span.innerText;
+        if (keyword) {
+          span.innerHTML = raw.replace(new RegExp(`(${keyword})`, 'gi'), '<span class="highlight">$1</span>');
+        } else {
+          span.innerHTML = raw;
+        }
+      });
+    }
+
+    function randomFeeling() {
+      const entries = document.querySelectorAll('.entry');
+      if (entries.length === 0) return alert("暂无留言");
+      const randomIndex = Math.floor(Math.random() * entries.length);
+      entries[randomIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function saveToStorage() {
+      localStorage.setItem("jeffery-log", document.getElementById("log").innerHTML);
+    }
+    function loadFromStorage() {
+      const stored = localStorage.getItem("jeffery-log");
+      if (stored) document.getElementById("log").innerHTML = stored;
+    }
+
+    function updateChart() {
+      const ctx = document.getElementById("chart").getContext("2d");
+      const data = {};
+      document.querySelectorAll(".entry span").forEach(e => {
+        const emo = e.innerText.trim().slice(0, 2);
+        data[emo] = (data[emo] || 0) + 1;
+      });
+      const chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: Object.keys(data),
+          datasets: [{
+            label: "情绪分布",
+            data: Object.values(data),
+            backgroundColor: "#4e79a7"
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+    }
+
+    function getRandomColor() {
+      return '#' + Math.floor(Math.random()*16777215).toString(16);
+    }
+
+    loadFromStorage();
+    updateChart();
   </script>
 </body>
 </html>
