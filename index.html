@@ -4,7 +4,52 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🌙 Jeffery 的情绪树洞</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js">  const emojiMap = {
+    happy: '😊',
+    sad: '😢',
+    angry: '😡',
+    anxious: '😰',
+    bored: '🥱',
+    tired: '😴',
+    excited: '🤩',
+    confused: '🤯'
+  };
+
+  function updateChart() {
+    const ctx = document.getElementById("chart").getContext("2d");
+    const data = {};
+    document.querySelectorAll(".entry span").forEach(e => {
+      [...e.innerText.matchAll(/[�-�][�-�]/g)].forEach(m => {
+        const emo = m[0];
+        data[emo] = (data[emo] || 0) + 1;
+      });
+    });
+    const total = Object.values(data).reduce((a,b) => a + b, 0);
+    const labels = Object.keys(data);
+    const chartData = labels.map(l => ({
+      label: `${l} ${(data[l] / total * 100).toFixed(1)}%`,
+      value: data[l],
+      backgroundColor: emotionColors[l] || "#ccc"
+    }));
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: chartData.map(d => d.label),
+        datasets: [{
+          data: chartData.map(d => d.value),
+          backgroundColor: chartData.map(d => d.backgroundColor)
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  }
+</script>
   <style>
     :root {
       --bg-color: rgba(255, 255, 255, 0.65);
@@ -123,6 +168,13 @@
     vertical-align: middle;
     margin-right: 6px;
   }
+  .emo-img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
 </style>
 </head>
 <body>
@@ -134,14 +186,14 @@
     <p class="desc">写下此刻心情，不用解释，放心交给这个专属大家的树洞吧 🌳</p>
     <input id="nickname" placeholder="你的小名、外号或任何标识（建议加上时间点，更有纪念感！）">
     <div class="emotion-tags" id="emotionTags">
-  <button onclick="toggleEmotion('😊')"><img src="happy.png" alt="开心" class="emo-img"> 开心</button>
-  <button onclick="toggleEmotion('😢')"><img src="sad.png" alt="伤心" class="emo-img"> 伤心</button>
-  <button onclick="toggleEmotion('😡')"><img src="angry.png" alt="生气" class="emo-img"> 生气</button>
-  <button onclick="toggleEmotion('😰')"><img src="anxious.png" alt="焦虑" class="emo-img"> 焦虑</button>
-  <button onclick="toggleEmotion('🥱')"><img src="bored.png" alt="无聊" class="emo-img"> 无聊</button>
-  <button onclick="toggleEmotion('😴')"><img src="tired.png" alt="疲惫" class="emo-img"> 疲惫</button>
-  <button onclick="toggleEmotion('🤩')"><img src="excited.png" alt="兴奋" class="emo-img"> 兴奋</button>
-  <button onclick="toggleEmotion('🤯')"><img src="confused.png" alt="迷茫" class="emo-img"> 迷茫</button>
+  <button onclick="toggleEmotion('happy')"><img src="happy.png" alt="开心" class="emo-img"> 开心</button>
+  <button onclick="toggleEmotion('sad')"><img src="sad.png" alt="伤心" class="emo-img"> 伤心</button>
+  <button onclick="toggleEmotion('angry')"><img src="angry.png" alt="生气" class="emo-img"> 生气</button>
+  <button onclick="toggleEmotion('anxious')"><img src="anxious.png" alt="焦虑" class="emo-img"> 焦虑</button>
+  <button onclick="toggleEmotion('bored')"><img src="bored.png" alt="无聊" class="emo-img"> 无聊</button>
+  <button onclick="toggleEmotion('tired')"><img src="tired.png" alt="疲惫" class="emo-img"> 疲惫</button>
+  <button onclick="toggleEmotion('excited')"><img src="excited.png" alt="兴奋" class="emo-img"> 兴奋</button>
+  <button onclick="toggleEmotion('confused')"><img src="confused.png" alt="迷茫" class="emo-img"> 迷茫</button>
 </div>
     <div class="feedback" id="emotionFeedback">已选情绪：无</div>
     <textarea id="feeling" placeholder="今天你想说什么？"></textarea>
@@ -208,7 +260,7 @@
       const color = colors[nick] || getRandomColor();
       const entry = document.createElement("div");
       entry.className = "entry";
-      entry.innerHTML = `<time>${time}</time><strong style="color:${color}">${nick || "匿名"}</strong>：<span>${selectedEmotions.join(' ')} ${text}</span>`;
+      entry.innerHTML = `<time>${time}</time><strong style="color:${color}">${nick || "匿名"}</strong>：<span>${selectedEmotions.map(e => emojiMap[e] || e).join(' ')} ${text}</span>`;
       document.getElementById("log").prepend(entry);
       document.getElementById("feeling").value = "";
       selectedEmotions = [];
